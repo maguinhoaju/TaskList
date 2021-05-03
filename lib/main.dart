@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -42,6 +43,24 @@ class _HomeState extends State<Home> {
     });
   }
 
+  Future<Null> _refresh() async {
+    await Future.delayed(Duration(seconds: 1));
+
+    setState(() {
+      _todoList.sort((a, b) {
+        if (a["ok"] && !b["ok"])
+          return 1;
+        else if (!a["ok"] && b["ok"])
+          return -1;
+        else
+          return 0;
+      });
+      _saveData();
+    });
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,10 +91,14 @@ class _HomeState extends State<Home> {
             ),
           ),
           Expanded(
+            child: RefreshIndicator(
               child: ListView.builder(
                   padding: EdgeInsets.only(top: 10.0),
                   itemCount: _todoList.length,
-                  itemBuilder: buildItem))
+                  itemBuilder: buildItem),
+              onRefresh: _refresh,
+            ),
+          )
         ],
       ),
     );
@@ -85,10 +108,11 @@ class _HomeState extends State<Home> {
     return Dismissible(
       key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
       background: Container(
-        color: Colors.red,
+        decoration: BoxDecoration(gradient: AppGradients.linear),
+        //color: Colors.red,
         child: Align(
           alignment: Alignment(-0.9, 0.0),
-          child: Icon(Icons.delete, color: Colors.white),
+          child: Icon(Icons.delete, color: Colors.red),
         ),
       ),
       direction: DismissDirection.startToEnd,
@@ -127,6 +151,7 @@ class _HomeState extends State<Home> {
           );
 
           //TODO: Refazer utilizando classe não depreciada
+          Scaffold.of(context).removeCurrentSnackBar();
           Scaffold.of(context).showSnackBar(snack);
         });
       },
@@ -152,4 +177,14 @@ class _HomeState extends State<Home> {
       return null;
     }
   }
+}
+
+class AppGradients {
+  static final linear = LinearGradient(colors: [
+    Colors.white,
+    Colors.red,
+  ], stops: [
+    0.0,
+    0.695
+  ], transform: GradientRotation(2.13959913 * pi));
 }
